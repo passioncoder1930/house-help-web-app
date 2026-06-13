@@ -11,7 +11,7 @@ import bookingRoutes from './modules/bookings/booking.routes.js';
 import reviewRoutes from './modules/reviews/review.routes.js';
 
 const app = express();
-
+app.set('trust proxy', 1); // Vercel, Render, Heroku, Nginx, etc.
 app.use(cors({ origin: env.corsOrigin === '*' ? true : env.corsOrigin }));
 app.use(express.json());
 
