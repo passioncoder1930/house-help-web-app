@@ -31,10 +31,15 @@ app.use('/api/providers', providerRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-app.use(errorHandler);
+// app.use(errorHandler);
+let isConnected = false;
 
-await connectDb();
-
-app.listen(env.port, () => {
-  console.log(`Server running on http://localhost:${env.port}`);
+app.use(async (_req, _res, next) => {
+  if (!isConnected) {
+    await connectDb();
+    isConnected = true;
+  }
+  next();
 });
+
+export default app;
