@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { connectDb } from './config/db.js';
-
+import { env } from './config/env.js';
+import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import categoryRoutes from './modules/categories/category.routes.js';
 import providerRoutes from './modules/providers/provider.routes.js';
@@ -11,14 +12,13 @@ import reviewRoutes from './modules/reviews/review.routes.js';
 
 const app = express();
 
-const corsOrigin = process.env.CORS_ORIGIN || '*';
-
-app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin }));
+app.use(cors({ origin: env.corsOrigin === '*' ? true : env.corsOrigin }));
 app.use(express.json());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
+  message: { error: 'Too many requests, please try again later.' },
 });
 
 app.get('/health', (_req, res) => {
@@ -31,20 +31,10 @@ app.use('/api/providers', providerRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-app.use(async (err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: 'Internal Server Error' });
+app.use(errorHandler);
+
+await connectDb();
+
+app.listen(env.port, () => {
+  console.log(`Server running on http://localhost:${env.port}`);
 });
-
-let isConnected = false;
-
-async function initDb() {
-  if (!isConnected) {
-    await connectDb();
-    isConnected = true;
-  }
-}
-
-await initDb();
-
-export default app;
